@@ -23,7 +23,7 @@ const UniversityCard = ({ name, location, matchScore, rank, imageColor }) => (
             </button>
         </div>
 
-        <h3 className="font-bold text-slate-900 text-lg leading-tight mb-1 group-hover:text-violet-600 transition-colors">{name}</h3>
+        <h3 className="font-bold text-slate-900 text-lg leading-tight mb-1 group-hover:text-[#D26E1E] transition-colors">{name}</h3>
         <div className="flex items-center gap-1 text-slate-400 text-sm mb-4">
             <MapPin size={14} /> {location}
         </div>
@@ -101,21 +101,21 @@ export default function DashboardContent() {
                     <section>
                         <div className="flex justify-between items-end mb-6">
                             <div>
-                                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2"><span className="flex w-2 h-2 rounded-full bg-violet-600 animate-pulse"></span>AI Recommended for You</h2>
+                                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2"><span className="flex w-2 h-2 rounded-full bg-[#D26E1E] animate-pulse"></span>AI Recommended for You</h2>
                                 <p className="text-sm text-slate-500">Based on your new GRE score update.</p>
                             </div>
-                            <button className="text-sm font-semibold text-violet-600 hover:text-violet-700 flex items-center gap-1">View All <ChevronRight size={16} /></button>
+                            <button className="text-sm font-semibold text-[#D26E1E] hover:text-[#8C3C0A] flex items-center gap-1">View All <ChevronRight size={16} /></button>
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-5">
                             <UniversityCard name="Stanford University" location="California, USA" matchScore={94} rank={3} imageColor="bg-red-800" />
                             <UniversityCard name="University of Toronto" location="Toronto, Canada" matchScore={88} rank={21} imageColor="bg-blue-800" />
                             <UniversityCard name="TU Munich" location="Munich, Germany" matchScore={72} rank={37} imageColor="bg-sky-600" />
-                            <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center p-6 text-center hover:bg-violet-50 hover:border-violet-200 transition-all cursor-pointer group">
+                            <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center p-6 text-center hover:bg-orange-50 hover:border-orange-200 transition-all cursor-pointer group">
                                 <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                                    <ArrowUpRight className="text-slate-400 group-hover:text-violet-600" />
+                                    <ArrowUpRight className="text-slate-400 group-hover:text-[#D26E1E]" />
                                 </div>
-                                <h3 className="font-bold text-slate-600 group-hover:text-violet-700">See 15 More Matches</h3>
+                                <h3 className="font-bold text-slate-600 group-hover:text-[#8C3C0A]">See 15 More Matches</h3>
                             </div>
                         </div>
                     </section>
@@ -128,25 +128,25 @@ export default function DashboardContent() {
 
                         <div className="relative pt-4 pb-8">
                             <div className="h-1.5 bg-slate-100 rounded-full w-full absolute top-5 left-0"></div>
-                            <div className="h-1.5 bg-gradient-to-r from-violet-600 to-purple-600 rounded-full w-2/3 absolute top-5 left-0"></div>
+                            <div className="h-1.5 bg-gradient-to-r from-[#D26E1E] to-[#8C3C0A] rounded-full w-2/3 absolute top-5 left-0"></div>
 
                             <div className="flex justify-between relative">
                                 {['Profile', 'Docs', 'Essays', 'Review', 'Submit'].map((step, i) => (
                                     <div key={i} className="flex flex-col items-center gap-2">
-                                        <div className={`w-3 h-3 rounded-full ring-4 ring-white transition-all ${i < 2 ? 'bg-violet-600' : i === 2 ? 'bg-white border-4 border-violet-600 w-4 h-4' : 'bg-slate-200'}`} />
+                                        <div className={`w-3 h-3 rounded-full ring-4 ring-white transition-all ${i < 2 ? 'bg-[#D26E1E]' : i === 2 ? 'bg-white border-4 border-[#D26E1E] w-4 h-4' : 'bg-slate-200'}`} />
                                         <span className={`text-xs font-bold ${i < 3 ? 'text-slate-900' : 'text-slate-400'}`}>{step}</span>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="bg-violet-50 rounded-xl p-4 flex items-start gap-3">
-                            <CheckCircle className="w-5 h-5 text-violet-600 mt-0.5 flex-shrink-0" />
+                        <div className="bg-orange-50 rounded-xl p-4 flex items-start gap-3">
+                            <CheckCircle className="w-5 h-5 text-[#D26E1E] mt-0.5 flex-shrink-0" />
                             <div>
                                 <p className="text-sm font-bold text-slate-900">Action Required: Upload SOP</p>
                                 <p className="text-xs text-slate-500">Your statement of purpose is missing for New York University.</p>
                             </div>
-                            <button className="ml-auto text-xs font-bold bg-white px-3 py-1.5 rounded-lg shadow-sm text-slate-900 hover:text-violet-600 whitespace-nowrap">Upload</button>
+                            <button className="ml-auto text-xs font-bold bg-white px-3 py-1.5 rounded-lg shadow-sm text-slate-900 hover:text-[#D26E1E] whitespace-nowrap">Upload</button>
                         </div>
                     </section>
                 </div>

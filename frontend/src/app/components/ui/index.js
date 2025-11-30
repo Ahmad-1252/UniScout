@@ -1,4 +1,4 @@
-// Button Component - Reddit style
+// Button Component
 export const Button = ({
   children,
   onClick,
@@ -12,13 +12,13 @@ export const Button = ({
     "px-4 py-2 rounded-full font-bold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
-    primary: "bg-[#FF4500] text-white hover:bg-[#ff5414] active:bg-[#cc3700]",
+    primary: "bg-[#D26E1E] text-white hover:bg-[#8C3C0A] active:bg-[#6b2d07]",
     secondary:
-      "bg-transparent border border-[#0079D3] text-[#0079D3] hover:bg-[#0079D3] hover:text-white",
+      "bg-transparent border border-[#D26E1E] text-[#D26E1E] hover:bg-[#D26E1E] hover:text-white",
     outline:
-      "bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800",
+      "bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-50",
     google:
-      "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700",
+      "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50",
   };
 
   return (
@@ -34,7 +34,7 @@ export const Button = ({
   );
 };
 
-// Input Component - Reddit style
+// Input Component
 export const Input = ({
   type = "text",
   placeholder,
@@ -55,8 +55,9 @@ export const Input = ({
         disabled={disabled}
         className={`w-full px-4 py-3 rounded border ${error
           ? "border-red-500 focus:border-red-500"
-          : "border-gray-300 dark:border-gray-600 focus:border-[#0079D3]"
-          } bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#0079D3] focus:ring-opacity-50 transition-all ${className}`}
+          : "border-gray-300 focus:border-[#D26E1E]"
+          } bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed ${className}`}
+        style={{ color: '#1f2937', WebkitTextFillColor: '#1f2937' }}
         {...props}
       />
       {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
@@ -64,27 +65,27 @@ export const Input = ({
   );
 };
 
-// Card Component - Modern style
+// Card Component
 export const Card = ({ children, className = "" }) => {
   return (
     <div
-      className={`bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl ${className}`}
+      className={`bg-white border border-gray-200 rounded-2xl shadow-xl ${className}`}
     >
       {children}
     </div>
   );
 };
 
-// Alert Component - Reddit style
+// Alert Component
 export const Alert = ({ type = "info", message, onClose }) => {
   const types = {
     success:
-      "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200",
+      "bg-green-50 border-green-200 text-green-800",
     error:
-      "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200",
-    info: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200",
+      "bg-red-50 border-red-200 text-red-800",
+    info: "bg-blue-50 border-blue-200 text-blue-800",
     warning:
-      "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200",
+      "bg-yellow-50 border-yellow-200 text-yellow-800",
   };
 
   return (
@@ -101,7 +102,7 @@ export const Alert = ({ type = "info", message, onClose }) => {
   );
 };
 
-// Loading Spinner - Reddit style
+// Loading Spinner
 export const Spinner = ({ size = "md", className = "" }) => {
   const sizes = {
     sm: "w-4 h-4 border-2",
@@ -111,17 +112,17 @@ export const Spinner = ({ size = "md", className = "" }) => {
 
   return (
     <div
-      className={`${sizes[size]} border-gray-200 border-t-[#FF4500] rounded-full animate-spin ${className}`}
+      className={`${sizes[size]} border-gray-200 border-t-[#D26E1E] rounded-full animate-spin ${className}`}
     ></div>
   );
 };
 
-// Link Component - Reddit style
+// Link Component
 export const Link = ({ href, children, className = "" }) => {
   return (
     <a
       href={href}
-      className={`text-[#0079D3] hover:underline text-sm ${className}`}
+      className={`text-[#D26E1E] hover:underline text-sm ${className}`}
     >
       {children}
     </a>
@@ -132,13 +133,13 @@ export const Link = ({ href, children, className = "" }) => {
 export const Divider = ({ text, className = "" }) => {
   return (
     <div className={`flex items-center my-4 ${className}`}>
-      <div className="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
+      <div className="flex-1 border-t border-gray-300"></div>
       {text && (
-        <span className="px-4 text-sm text-gray-500 dark:text-gray-400">
+        <span className="px-4 text-sm text-gray-500">
           {text}
         </span>
       )}
-      <div className="flex-1 border-t border-gray-300 dark:border-gray-600"></div>
+      <div className="flex-1 border-t border-gray-300"></div>
     </div>
   );
 };
@@ -151,7 +152,7 @@ export const Label = ({ htmlFor, children, className = "" }) => {
   return (
     <label
       htmlFor={htmlFor}
-      className={`text-sm font-medium text-gray-700 dark:text-gray-300 ${className}`}
+      className={`text-sm font-medium text-gray-700 ${className}`}
     >
       {children}
     </label>
@@ -169,7 +170,7 @@ export const CardContent = ({ children, className = "" }) => {
 
 export const CardDescription = ({ children, className = "" }) => {
   return (
-    <p className={`text-sm text-gray-500 dark:text-gray-400 ${className}`}>
+    <p className={`text-sm text-gray-500 ${className}`}>
       {children}
     </p>
   );
@@ -185,7 +186,7 @@ export const CardHeader = ({ children, className = "" }) => {
 
 export const CardTitle = ({ children, className = "" }) => {
   return (
-    <h3 className={`text-lg font-semibold text-gray-900 dark:text-gray-100 ${className}`}>
+    <h3 className={`text-lg font-semibold text-gray-900 ${className}`}>
       {children}
     </h3>
   );

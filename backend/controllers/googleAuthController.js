@@ -166,6 +166,7 @@ class GoogleAuthController {
         firstName: existingUser.firstName,
         lastName: existingUser.lastName,
         email: existingUser.email,
+        role: existingUser.role,
         isVerified: existingUser.isVerified,
         profileImage: existingUser.profileImage,
         profileCompleted: existingUser.profileCompleted,

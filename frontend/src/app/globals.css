@@ -47,3 +47,63 @@ body {
   background: var(--selection-bg);
   color: var(--selection-fg);
 }
+
+/* Force light color scheme on form inputs to prevent dark mode override */
+input,
+select,
+textarea {
+  color-scheme: light;
+}
+
+/* Ensure input/select/textarea text colors are dark (override browser dark mode)
+   and placeholders are readable even when browser forces dark controls. */
+input,
+textarea,
+select {
+  color: #1f2937;
+  /* Tailwind slate-800 */
+  -webkit-text-fill-color: #1f2937;
+  /* For some browsers (Chrome) */
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+  /* Tailwind slate-400 */
+  opacity: 1;
+  /* Ensure placeholder visible */
+}
+
+/* Specific native form controls that sometimes render differently */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"] {
+  color: #1f2937;
+  -webkit-text-fill-color: #1f2937;
+}
+
+/* Amber Horizontal Gradient Animation */
+@keyframes gradient-move {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.amber-horizontal-gradient {
+  background: linear-gradient(90deg,
+      #FA9628 0%,
+      #D26E1E 25%,
+      #8C3C0A 50%,
+      #D26E1E 75%,
+      #FA9628 100%);
+  background-size: 200% 100%;
+  animation: gradient-move 8s ease infinite;
+}

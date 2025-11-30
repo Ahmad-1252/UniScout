@@ -195,13 +195,21 @@ export const AuthProvider = ({ children }) => {
       await authService.logout();
       setUser(null);
       setIsAuthenticated(false);
-      router.push(ROUTES.LOGIN);
+      // Mark that user intentionally logged out (prevent immediate page guards
+      // from forcing a redirect back to the login page) and redirect home.
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("justLoggedOut", "1");
+      }
+      router.push(ROUTES.HOME);
     } catch (error) {
       console.error("Logout error:", error);
       // Even if logout request fails, clear local state
       setUser(null);
       setIsAuthenticated(false);
-      router.push(ROUTES.LOGIN);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("justLoggedOut", "1");
+      }
+      router.push(ROUTES.HOME);
     }
   };
 

@@ -18,7 +18,20 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (mounted && !loading && !isAuthenticated) {
-      router.push(ROUTES.LOGIN);
+      // If the user just logged out intentionally, send them to the home page
+      // instead of the old login/signup pages. This avoids navigation races
+      // where logout triggers a home redirect but page guards push login.
+      try {
+        const justLoggedOut = typeof window !== 'undefined' && sessionStorage.getItem('justLoggedOut');
+        if (justLoggedOut) {
+          sessionStorage.removeItem('justLoggedOut');
+          router.push(ROUTES.HOME);
+        } else {
+          router.push(ROUTES.LOGIN);
+        }
+      } catch (e) {
+        router.push(ROUTES.LOGIN);
+      }
     }
   }, [mounted, loading, isAuthenticated, router]);
 

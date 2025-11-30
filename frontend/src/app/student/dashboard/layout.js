@@ -21,7 +21,7 @@ import { useAuth } from '@/context/AuthContext';
 
 const SidebarItem = ({ icon: Icon, label, active = false, count, href }) => (
     <Link href={href}>
-        <div className={`flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all group ${active ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+        <div className={`flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all group ${active ? 'bg-[#D26E1E] text-white shadow-lg shadow-orange-500/30' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
             }`}>
             <div className="flex items-center gap-3">
                 <Icon size={20} className={active ? 'text-white' : 'text-slate-400 group-hover:text-slate-900'} />
@@ -46,7 +46,7 @@ const DashboardLayout = ({ children }) => {
     const handleLogout = async () => {
         try {
             await logout();
-            router.push(ROUTES.LOGIN);
+            router.push(ROUTES.HOME);
         } catch (error) {
             console.error('Logout failed:', error);
         }
@@ -65,10 +65,10 @@ const DashboardLayout = ({ children }) => {
             {/* Sidebar */}
             <aside className="w-72 bg-white border-r border-slate-200 hidden lg:flex flex-col fixed h-full z-20 shadow-lg">
                 <div className="p-8 flex items-center gap-2">
-                    <div className="bg-gradient-to-br from-violet-600 to-purple-600 p-1.5 rounded-lg shadow-lg shadow-violet-500/20">
+                    <div className="bg-[#D26E1E] p-1.5 rounded-lg shadow-lg shadow-orange-500/20">
                         <div className="w-5 h-5 bg-white rounded-sm" />
                     </div>
-                    <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-purple-600">UniFinder</span>
+                    <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#8C3C0A] to-[#D26E1E]">UniScout</span>
                 </div>
 
                 <nav className="flex-1 px-4 space-y-2">
@@ -98,10 +98,10 @@ const DashboardLayout = ({ children }) => {
 
                 <div className="p-4">
                     <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 text-white relative overflow-hidden shadow-xl">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500 rounded-full blur-3xl opacity-50 -mr-10 -mt-10"></div>
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-[#FA9628] rounded-full blur-3xl opacity-50 -mr-10 -mt-10"></div>
                         <p className="text-sm font-medium text-slate-300 mb-1">Pro Plan</p>
                         <p className="font-bold mb-3">Upgrade to Premium</p>
-                        <button className="w-full py-2 bg-white text-slate-900 rounded-lg text-xs font-bold hover:bg-violet-50 transition-colors">View Plans</button>
+                        <button className="w-full py-2 bg-white text-slate-900 rounded-lg text-xs font-bold hover:bg-orange-50 transition-colors">View Plans</button>
                     </div>
                 </div>
             </aside>
@@ -115,11 +115,11 @@ const DashboardLayout = ({ children }) => {
                             <h1 className="text-2xl font-bold text-slate-900">
                                 Welcome back, {user?.firstName || 'Student'} 👋
                             </h1>
-                            <p className="text-slate-500 text-sm">Here is what's happening with your applications today.</p>
+                            <p className="text-slate-500 text-sm">Here is what&apos;s happening with your applications today.</p>
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <button className="p-3 bg-white border border-slate-200 rounded-full text-slate-500 hover:text-violet-600 hover:border-violet-200 transition-all relative shadow-sm">
+                            <button className="p-3 bg-white border border-slate-200 rounded-full text-slate-500 hover:text-[#D26E1E] hover:border-orange-200 transition-all relative shadow-sm">
                                 <Bell size={20} />
                                 <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                             </button>
@@ -130,7 +130,7 @@ const DashboardLayout = ({ children }) => {
                                     </p>
                                     <p className="text-xs text-slate-400">Masters Applicant</p>
                                 </div>
-                                <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm">
+                                <div className="w-10 h-10 bg-gradient-to-br from-[#FA9628] to-[#D26E1E] text-white rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm">
                                     {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                                 </div>
                             </div>
