@@ -1,628 +1,1392 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import {
-  Search,
-  CheckCircle2,
-  Zap,
-  BarChart3,
-  Star,
-  ShieldCheck,
-  Menu,
-  X,
-  ArrowRight,
-  GraduationCap,
-  Globe,
-  Sparkles,
-  ChevronDown,
-  Trophy,
-  Timer,
-  AlertCircle,
-  FileText,
-  PieChart,
-  Twitter,
-  Linkedin,
-  Facebook,
-  Lightbulb,
-  Target,
-  Users
-} from 'lucide-react';
-import { ROUTES } from '@/lib/constants';
+import ReactDOM from 'react-dom';
 
-// --- Utility: Intersection Observer Hook ---
-const useElementOnScreen = (options) => {
-  const containerRef = useRef(null);
-  const [isVisible, setIsVisible] = useState(false);
+// --- Styles for the Custom Gradient ---
+const CustomStyles = () => (
+  <style>{`
+    .amber-horizontal-gradient {
+      /* The exact gradient requested */
+      background: linear-gradient(
+        270deg, 
+        rgba(250, 150, 40, 0.6) 0%, 
+        rgba(210, 110, 30, 0.8) 50%, 
+        rgba(140, 60, 10, 0.95) 100%
+      );
+      height: 500px;
+      width: auto;
+      color: white;
+      padding: 40px;
+      border-radius: 24px;
+      /* Shadow follows the direction slightly for depth */
+      box-shadow: 10px 0 30px rgba(140, 60, 10, 0.3);
+      position: relative;
+    }
 
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      const [entry] = entries;
-      if (entry.isIntersecting) {
-        setIsVisible(true);
-        if (containerRef.current) observer.unobserve(containerRef.current);
+    /* Mobile adjustment to prevent fixed height breaking layout on small screens */
+    @media (max-width: 768px) {
+      .amber-horizontal-gradient {
+        height: auto;
+        min-height: 600px; /* Give it enough room for stacked content */
       }
-    }, options);
-
-    if (containerRef.current) observer.observe(containerRef.current);
-
-    return () => {
-      if (containerRef.current) observer.unobserve(containerRef.current);
-    };
-  }, [options]);
-
-  return [containerRef, isVisible];
-};
-
-// --- Component: Animated Counter ---
-const AnimatedCounter = ({ end, duration = 2000, suffix = '' }) => {
-  const [count, setCount] = useState(0);
-  const [containerRef, isVisible] = useElementOnScreen({ threshold: 0.5 });
-
-  const numberValue = parseInt(end.toString().replace(/,/g, ''));
-
-  useEffect(() => {
-    if (!isVisible) return;
-
-    let startTime;
-    const step = (timestamp) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / duration, 1);
-      const easeProgress = 1 - Math.pow(1 - progress, 4);
-      setCount(Math.floor(easeProgress * numberValue));
-
-      if (progress < 1) {
-        window.requestAnimationFrame(step);
-      }
-    };
-
-    window.requestAnimationFrame(step);
-  }, [isVisible, numberValue, duration]);
-
-  return (
-    <span ref={containerRef} className="tabular-nums tracking-tight">
-      {count.toLocaleString()}{suffix}
-    </span>
-  );
-};
-
-// --- Component: Feature Card ---
-const FeatureCard = ({ icon: Icon, title, description, delay }) => (
-  <div
-    className="group p-8 bg-white rounded-[2rem] border border-slate-100 shadow-[0_2px_10px_-4px_rgba(124,58,202,0.1)] hover:shadow-[0_20px_40px_-12px_rgba(124,58,202,0.2)] transition-all duration-500 ease-out hover:-translate-y-2"
-    style={{ animationDelay: `${delay}ms` }}
-  >
-    <div className="w-14 h-14 bg-violet-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-violet-600 transition-colors duration-500">
-      <Icon className="w-7 h-7 text-violet-600 group-hover:text-white transition-colors duration-500" />
-    </div>
-    <h3 className="text-xl font-bold text-slate-900 mb-3">{title}</h3>
-    <p className="text-slate-500 leading-relaxed">{description}</p>
-  </div>
+    }
+  `}</style>
 );
 
-// --- Component: Logo Marquee ---
-const LogoMarquee = () => {
-  const logos = ["Harvard", "Stanford", "MIT", "Oxford", "Cambridge", "Yale", "Princeton", "Columbia"];
+// --- Shared Helper: Icon Wrapper ---
+const IconWrapper = ({ children, size = 24, className = "", ...props }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    {...props}
+  >
+    {children}
+  </svg>
+);
+
+// --- Icons Definitions ---
+
+const SearchIcon = (props) => (
+  <IconWrapper {...props}>
+    <circle cx="11" cy="11" r="8"></circle>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+  </IconWrapper>
+);
+
+const GlobeIcon = (props) => (
+  <IconWrapper {...props}>
+    <circle cx="12" cy="12" r="10"></circle>
+    <line x1="2" y1="12" x2="22" y2="12"></line>
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+  </IconWrapper>
+);
+
+const BookOpenIcon = (props) => (
+  <IconWrapper {...props}>
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+  </IconWrapper>
+);
+
+const CalendarIcon = (props) => (
+  <IconWrapper {...props}>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+    <line x1="16" y1="2" x2="16" y2="6"></line>
+    <line x1="8" y1="2" x2="8" y2="6"></line>
+    <line x1="3" y1="10" x2="21" y2="10"></line>
+  </IconWrapper>
+);
+
+const MapPinIcon = (props) => (
+  <IconWrapper {...props}>
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+    <circle cx="12" cy="10" r="3"></circle>
+  </IconWrapper>
+);
+
+const XIcon = (props) => (
+  <IconWrapper {...props}>
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </IconWrapper>
+);
+
+const EyeIcon = (props) => (
+  <IconWrapper {...props}>
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+    <circle cx="12" cy="12" r="3"></circle>
+  </IconWrapper>
+);
+
+const EyeOffIcon = (props) => (
+  <IconWrapper {...props}>
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07-2.3 2.3"></path>
+    <line x1="1" y1="1" x2="23" y2="23"></line>
+  </IconWrapper>
+);
+
+const ArrowRightIcon = (props) => (
+  <IconWrapper {...props}>
+    <line x1="5" y1="12" x2="19" y2="12"></line>
+    <polyline points="12 5 19 12 12 19"></polyline>
+  </IconWrapper>
+);
+
+const CheckCircleIcon = (props) => (
+  <IconWrapper {...props}>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+  </IconWrapper>
+);
+
+const MenuIcon = (props) => (
+  <IconWrapper {...props}>
+    <line x1="3" y1="12" x2="21" y2="12"></line>
+    <line x1="3" y1="6" x2="21" y2="6"></line>
+    <line x1="3" y1="18" x2="21" y2="18"></line>
+  </IconWrapper>
+);
+
+const ChevronDownIcon = (props) => (
+  <IconWrapper {...props}>
+    <polyline points="6 9 12 15 18 9"></polyline>
+  </IconWrapper>
+);
+
+const ChevronLeftIcon = (props) => (
+  <IconWrapper {...props}>
+    <polyline points="15 18 9 12 15 6"></polyline>
+  </IconWrapper>
+);
+
+const ChevronRightIcon = (props) => (
+  <IconWrapper {...props}>
+    <polyline points="9 18 15 12 9 6"></polyline>
+  </IconWrapper>
+);
+
+const QuoteIcon = (props) => (
+  <IconWrapper {...props} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+    <path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H15.017C14.4647 8 14.017 8.44772 14.017 9V11C14.017 11.5523 13.5693 12 13.017 12H12.017V5H22.017V15C22.017 18.3137 19.3307 21 16.017 21H14.017ZM5.01691 21L5.01691 18C5.01691 16.8954 5.91234 16 7.01691 16H10.0169C10.5692 16 11.0169 15.5523 11.0169 15V9C11.0169 8.44772 10.5692 8 10.0169 8H6.01691C5.46462 8 5.01691 8.44772 5.01691 9V11C5.01691 11.5523 4.56919 12 4.01691 12H3.01691V5H13.0169V15C13.0169 18.3137 10.3306 21 7.01691 21H5.01691Z" />
+  </IconWrapper>
+);
+
+const TwitterIcon = (props) => (
+  <IconWrapper {...props}>
+    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+  </IconWrapper>
+);
+
+const LinkedinIcon = (props) => (
+  <IconWrapper {...props}>
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+  </IconWrapper>
+);
+
+const FacebookIcon = (props) => (
+  <IconWrapper {...props}>
+    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+  </IconWrapper>
+);
+
+
+// --- Shared Components ---
+
+const Button = ({ children, variant = 'primary', className = '', onClick, ...props }) => {
+  const baseStyle = "px-5 py-2.5 rounded-md font-medium transition-all duration-200 flex items-center justify-center";
+
+  // Palette: Using the requested rgba(140, 60, 10, 0.95) which is roughly #8C3C0A
+  const variants = {
+    primary: "bg-[#8C3C0A] hover:bg-[#6b2d07] text-white shadow-sm border border-transparent",
+    outline: "border border-[#8C3C0A] text-[#8C3C0A] hover:bg-orange-50 bg-transparent",
+    ghost: "text-[#8C3C0A] hover:text-[#D26E1E] hover:bg-orange-50",
+    social: "border border-slate-300 text-slate-700 hover:bg-slate-50 bg-white w-full relative",
+    link: "text-[#D26E1E] hover:underline p-0 h-auto font-bold"
+  };
+
   return (
-    <div className="w-full py-12 bg-white border-y border-slate-100 overflow-hidden">
-      <div className="flex animate-scroll gap-16 min-w-full items-center justify-around whitespace-nowrap px-8">
-        {[...logos, ...logos, ...logos].map((logo, i) => (
-          <span key={i} className="text-2xl font-serif font-bold text-slate-300 select-none hover:text-slate-800 transition-colors cursor-default">
-            {logo}
-          </span>
-        ))}
+    <button
+      className={`${baseStyle} ${variants[variant]} ${className}`}
+      onClick={onClick}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+
+// --- Course Recommendation Widget (Multi-step) ---
+
+const CourseRecommendationWidget = ({ onComplete }) => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [selections, setSelections] = useState({
+    level: '',
+    subject: '',
+    destination: '',
+    startYear: ''
+  });
+
+  const updateSelection = (field, value) => {
+    setSelections(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleNext = () => {
+    if (currentStep < 4) setCurrentStep(currentStep + 1);
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
+  };
+
+  const handleFinalSubmit = () => {
+    console.log("Submitting selections:", selections);
+    if (onComplete) onComplete();
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-lg max-w-md mt-8 text-slate-800 transition-all duration-300 min-h-[240px] flex flex-col justify-between">
+      <div>
+        <div className="text-xs text-[#8C3C0A] font-bold mb-1">
+          STEP {currentStep} of 4
+        </div>
+
+        {/* --- STEP 1: Study Level --- */}
+        {currentStep === 1 && (
+          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="font-bold text-lg mb-4 text-slate-900">Select your intended study level</div>
+
+            <div className="grid grid-cols-4 gap-2 mb-6">
+              {['Bachelors', 'Masters', 'MBA', 'PhD'].map((level) => (
+                <button
+                  key={level}
+                  onClick={() => {
+                    updateSelection('level', level);
+                    handleNext();
+                  }}
+                  className={`border px-1 py-2 rounded text-sm transition-colors font-medium text-center ${selections.level === level
+                    ? 'border-[#8C3C0A] bg-orange-50 text-[#8C3C0A] font-bold'
+                    : 'border-gray-300 text-slate-600 hover:border-[#8C3C0A] hover:bg-orange-50'
+                    }`}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex justify-end items-center h-8"></div>
+          </div>
+        )}
+
+        {/* --- STEP 2: Subject Interest --- */}
+        {currentStep === 2 && (
+          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="font-bold text-lg mb-4 text-slate-900">Select a subject you're interested in</div>
+
+            <div className="relative mb-6">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <SearchIcon size={18} className="text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={selections.subject}
+                onChange={(e) => updateSelection('subject', e.target.value)}
+                placeholder="Search your subject/specialisation"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded focus:border-[#8C3C0A] focus:ring-1 focus:ring-[#8C3C0A] outline-none text-sm"
+              />
+            </div>
+
+            <div className="flex justify-between items-center mt-8">
+              <button onClick={handleBack} className="text-[#8C3C0A] text-sm font-medium hover:underline flex items-center gap-1">
+                <span className="text-lg">←</span> Back
+              </button>
+              <Button onClick={handleNext} className="flex items-center gap-2 text-sm font-bold bg-[#8C3C0A] text-white hover:bg-[#6b2d07] border-none">
+                Next <ArrowRightIcon size={16} />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* --- STEP 3: Destination --- */}
+        {currentStep === 3 && (
+          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="font-bold text-lg mb-4 text-slate-900">Select your study destination</div>
+
+            <div className="flex gap-2 mb-6 flex-wrap">
+              {['USA', 'UK', 'Germany'].map((country) => (
+                <button
+                  key={country}
+                  onClick={() => updateSelection('destination', country)}
+                  className={`border px-4 py-2 rounded text-sm font-medium transition-colors ${selections.destination === country
+                    ? 'border-[#8C3C0A] bg-orange-50 text-[#8C3C0A] font-bold'
+                    : 'border-gray-300 text-slate-700 hover:border-[#8C3C0A] hover:bg-orange-50'
+                    }`}
+                >
+                  {country}
+                </button>
+              ))}
+              <button className="border border-gray-300 px-3 py-2 rounded hover:border-[#8C3C0A] hover:bg-orange-50 text-sm text-slate-700 font-medium transition-colors flex items-center gap-1">
+                More <ChevronDownIcon size={14} />
+              </button>
+            </div>
+
+            <div className="flex justify-between items-center mt-8">
+              <button onClick={handleBack} className="text-[#8C3C0A] text-sm font-medium hover:underline flex items-center gap-1">
+                <span className="text-lg">←</span> Back
+              </button>
+              <Button onClick={handleNext} className="flex items-center gap-2 text-sm font-bold bg-[#8C3C0A] text-white hover:bg-[#6b2d07] border-none">
+                Next <ArrowRightIcon size={16} />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* --- STEP 4: Start Year --- */}
+        {currentStep === 4 && (
+          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="font-bold text-lg mb-4 text-slate-900">Select your study start year</div>
+
+            <div className="grid grid-cols-3 gap-2 mb-6">
+              {['Spring 2026', 'Fall 2026', 'Spring 2027'].map((year) => (
+                <button
+                  key={year}
+                  onClick={() => updateSelection('startYear', year)}
+                  className={`border px-3 py-2 rounded text-sm transition-colors ${selections.startYear === year
+                    ? 'border-[#8C3C0A] bg-orange-50 text-[#8C3C0A] font-bold'
+                    : 'border-gray-200 text-slate-600 hover:border-[#8C3C0A] hover:bg-orange-50'
+                    }`}
+                >
+                  {year}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex justify-between items-center">
+              <button onClick={handleBack} className="text-[#8C3C0A] text-sm font-medium hover:underline flex items-center gap-1">
+                <span className="text-lg">←</span> Back
+              </button>
+              {/* Action Button calls handleFinalSubmit */}
+              <Button
+                onClick={handleFinalSubmit}
+                className="flex items-center gap-2 text-sm font-bold bg-[#8C3C0A] text-white hover:bg-[#6b2d07]"
+              >
+                View results <ArrowRightIcon size={16} />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
-      <style jsx>{`
-        .animate-scroll { animation: scroll 40s linear infinite; }
-        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-33.333%); } }
-      `}</style>
     </div>
   );
 };
 
-// --- Component: Interactive Admission Predictor ---
-const AdmissionPredictor = () => {
-  const [gpa, setGpa] = useState(3.5);
-  const [activities, setActivities] = useState(5);
-  const [probability, setProbability] = useState(0);
+// --- Testimonials Section Component (Smooth Sliding) ---
 
-  useEffect(() => {
-    const score = ((gpa / 4) * 60) + ((activities / 10) * 40);
-    setProbability(Math.min(Math.round(score), 98));
-  }, [gpa, activities]);
-
-  return (
-    <section className="py-24 bg-[#FAFAFA]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl shadow-slate-200/50 overflow-hidden flex flex-col md:flex-row">
-          {/* Left: Controls */}
-          <div className="p-10 md:p-16 md:w-1/2 flex flex-col justify-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold uppercase tracking-wider mb-6 w-fit">
-              <Timer className="w-4 h-4" /> Interactive Tool
-            </div>
-            <h2 className="text-3xl font-bold text-slate-900 mb-6">Check your odds instantly.</h2>
-            <p className="text-slate-500 mb-10">Adjust the sliders to see how your GPA and extracurriculars impact your admission probability score.</p>
-
-            {/* Slider 1 */}
-            <div className="mb-8">
-              <div className="flex justify-between mb-2">
-                <label className="font-bold text-slate-700">GPA Score</label>
-                <span className="font-mono text-blue-600 font-bold">{gpa.toFixed(1)}</span>
-              </div>
-              <input
-                type="range" min="2.0" max="4.0" step="0.1" value={gpa}
-                onChange={(e) => setGpa(parseFloat(e.target.value))}
-                className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-violet-600 hover:accent-violet-700"
-              />
-            </div>
-
-            {/* Slider 2 */}
-            <div>
-              <div className="flex justify-between mb-2">
-                <label className="font-bold text-slate-700">Extracurricular Activities</label>
-                <span className="font-mono text-blue-600 font-bold">{activities}</span>
-              </div>
-              <input
-                type="range" min="0" max="10" step="1" value={activities}
-                onChange={(e) => setActivities(parseInt(e.target.value))}
-                className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-violet-600 hover:accent-violet-700"
-              />
-            </div>
-          </div>
-
-          {/* Right: Result Visualization */}
-          <div className="md:w-1/2 bg-slate-900 p-10 md:p-16 flex items-center justify-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-            <div className="text-center relative z-10">
-              <p className="text-slate-400 text-sm font-medium uppercase tracking-widest mb-4">Acceptance Probability</p>
-              <div className="text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400 tabular-nums transition-all duration-300">
-                {probability}%
-              </div>
-              <div className="mt-8 flex justify-center gap-2">
-                {probability > 80 ? (
-                  <span className="px-4 py-2 bg-emerald-500/20 text-emerald-300 rounded-full text-sm font-bold flex items-center gap-2 border border-emerald-500/30">
-                    <CheckCircle2 className="w-4 h-4" /> High Chance
-                  </span>
-                ) : (
-                  <span className="px-4 py-2 bg-violet-500/20 text-violet-300 rounded-full text-sm font-bold flex items-center gap-2 border border-violet-500/30">
-                    <Trophy className="w-4 h-4" /> Keep Improving
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// --- Component: FAQ Accordion ---
-const FAQSection = () => {
-  const [openIndex, setOpenIndex] = useState(0);
-  const faqs = [
-    { q: "How accurate is the prediction engine?", a: "Our AI model is trained on over 5 million historical application records, giving it a 94% accuracy rate for top 100 universities." },
-    { q: "Does this work for international students?", a: "Absolutely. We support grading systems from 150+ countries and automatically convert them to the US/UK equivalent scale." },
-    { q: "Can I find full-ride scholarships?", a: "Yes. Our database includes over $12M in financial aid opportunities, including merit-based, need-based, and athletic scholarships." },
+const TestimonialsSection = () => {
+  // Updated data with 6 entries
+  const testimonials = [
+    {
+      id: 1,
+      name: "Pranay Kasat",
+      course: "Master of Science in Global Logistics",
+      uni: "Arizona State University",
+      quote: "My counsellor's assistance at every step has been invaluable, and I cannot thank him enough for making my dreams a reality.",
+      initials: "PK",
+    },
+    {
+      id: 2,
+      name: "Bibil Jose",
+      course: "BSc in Mechanical Engineering",
+      uni: "Arizona State University",
+      quote: "QS were a huge help from the very beginning. When I felt overwhelmed, it was my counsellor who helped me to clarify my goals.",
+      initials: "BJ",
+    },
+    {
+      id: 3,
+      name: "Sarah Jenkins",
+      course: "MA in Digital Marketing",
+      uni: "University of Manchester",
+      quote: "The guidance I received on scholarship applications was a game-changer. I wouldn't be studying in the UK without their support.",
+      initials: "SJ",
+    },
+    {
+      id: 4,
+      name: "Ahmed Al-Fayed",
+      course: "MBA",
+      uni: "University of Toronto",
+      quote: "From visa interviews to accommodation, the team supported me through every hurdle. Truly a comprehensive service.",
+      initials: "AA",
+    },
+    {
+      id: 5,
+      name: "Maria Gonzalez",
+      course: "PhD in Biotechnology",
+      uni: "Technical University of Munich",
+      quote: "Finding a PhD position can be daunted, but the personalized counseling made the process smooth and stress-free.",
+      initials: "MG",
+    },
+    {
+      id: 6,
+      name: "Chen Wei",
+      course: "Bachelor of Computer Science",
+      uni: "National University of Singapore",
+      quote: "They helped me shortlist universities that perfectly matched my academic profile and career aspirations.",
+      initials: "CW",
+    }
   ];
 
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const handleNext = () => {
+    setActiveIndex((prev) => (prev + 1) % testimonials.length);
+  };
+
+  const handlePrev = () => {
+    setActiveIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  };
+
   return (
-    <section className="py-24 bg-white">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="bg-[#F0F4F8] py-16 px-4 overflow-hidden">
+      <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-violet-600 font-semibold tracking-wide uppercase text-xs mb-4">FAQ</h2>
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Common Questions</h2>
+          <h2 className="text-3xl font-bold text-slate-900 mb-3">What students say</h2>
+          <p className="text-slate-600 max-w-2xl mx-auto">
+            Hear how we've supported students like you to find their perfect study destination
+          </p>
         </div>
-        <div className="space-y-4">
-          {faqs.map((faq, idx) => (
-            <div key={idx} className="border border-slate-200 rounded-2xl overflow-hidden transition-all duration-300 hover:border-violet-200">
-              <button
-                onClick={() => setOpenIndex(openIndex === idx ? -1 : idx)}
-                className="w-full flex items-center justify-between p-6 text-left bg-white hover:bg-slate-50 transition-colors"
-              >
-                <span className="font-bold text-slate-900 text-lg">{faq.q}</span>
-                <ChevronDown className={`w-5 h-5 text-slate-500 transition-transform duration-300 ${openIndex === idx ? 'rotate-180' : ''}`} />
-              </button>
-              <div className={`overflow-hidden transition-[max-height] duration-500 ease-in-out ${openIndex === idx ? 'max-h-48' : 'max-h-0'}`}>
-                <div className="p-6 pt-0 text-slate-600 leading-relaxed">
-                  {faq.a}
+
+        <div className="relative h-[450px] flex justify-center items-center max-w-6xl mx-auto">
+
+          {/* Nav Left */}
+          <button
+            onClick={handlePrev}
+            className="hidden md:flex p-3 bg-white border border-slate-200 rounded-full shadow-sm hover:bg-slate-50 text-slate-600 absolute left-0 z-30 transition-colors"
+          >
+            <ChevronLeftIcon size={20} />
+          </button>
+
+          {/* Smooth Sliding Container */}
+          <div className="relative w-full h-full flex justify-center items-center">
+            {testimonials.map((student, index) => {
+              // Calculate position relative to active index
+              const length = testimonials.length;
+              let offset = (index - activeIndex + length) % length;
+              // Normalize offset to find shortest path (-1, 0, 1)
+              if (offset > length / 2) offset -= length;
+
+              // Determine styles based on offset
+              let wrapperClass = "absolute transition-all duration-500 ease-in-out w-full md:w-1/3 h-[400px] p-8 rounded-2xl shadow-md flex flex-col";
+              let content = null;
+
+              if (offset === 0) {
+                // CENTER CARD (Active) - White, Big, Photo Layout
+                wrapperClass += " z-20 bg-white border border-slate-100 transform scale-100 opacity-100 translate-x-0 h-[450px] shadow-xl";
+                content = (
+                  <>
+                    <div className="h-1/2 bg-slate-200 relative -mx-8 -mt-8 mb-6 rounded-t-2xl overflow-hidden">
+                      <div className="absolute top-4 left-4 bg-slate-900 text-white p-1.5 rounded">
+                        <IconWrapper size={16}><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></IconWrapper>
+                      </div>
+                      <div className="w-full h-full bg-gradient-to-t from-slate-400 to-slate-300 flex items-end justify-center">
+                        <span className="mb-4 text-slate-600 font-bold opacity-50 flex flex-col items-center">
+                          <span className="text-3xl mb-2">{student.initials}</span>
+                          Student Photo
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex-grow flex flex-col justify-center text-center">
+                      <h3 className="font-bold text-xl text-slate-900 mb-2">{student.name}</h3>
+                      <p className="text-sm text-slate-600 leading-relaxed font-medium">{student.course}</p>
+                      <p className="text-xs text-[#8C3C0A] font-bold uppercase mt-2">{student.uni}</p>
+                    </div>
+                  </>
+                );
+              } else if (offset === -1) {
+                // LEFT CARD - Use new rgba(140, 60, 10, 0.95)
+                wrapperClass += " z-10 bg-[#8C3C0A] text-white transform scale-95 opacity-90 -translate-x-full lg:-translate-x-[110%]";
+                content = (
+                  <>
+                    <QuoteIcon size={32} className="text-white mb-4 opacity-50" />
+                    <p className="text-sm font-medium leading-relaxed mb-6 flex-grow">{student.quote}</p>
+                    <QuoteIcon size={24} className="text-white opacity-50 self-end mb-4 transform rotate-180" />
+                    <div className="flex items-center gap-3 mt-auto">
+                      <div className="w-10 h-10 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-xs text-white font-bold bg-white/20">{student.initials}</div>
+                      <div>
+                        <p className="font-bold text-sm">{student.name}</p>
+                        <p className="text-[10px] text-white opacity-80 uppercase">{student.uni}</p>
+                      </div>
+                    </div>
+                  </>
+                );
+              } else if (offset === 1) {
+                // RIGHT CARD - Use new rgba(140, 60, 10, 0.95)
+                wrapperClass += " z-10 bg-[#8C3C0A] text-white transform scale-95 opacity-90 translate-x-full lg:translate-x-[110%]";
+                content = (
+                  <>
+                    <QuoteIcon size={32} className="text-white mb-4 opacity-50" />
+                    <p className="text-sm font-medium leading-relaxed mb-6 flex-grow">{student.quote}</p>
+                    <QuoteIcon size={24} className="text-white opacity-50 self-end mb-4 transform rotate-180" />
+                    <div className="flex items-center gap-3 mt-auto">
+                      <div className="w-10 h-10 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-xs text-white font-bold bg-white/20">{student.initials}</div>
+                      <div>
+                        <p className="font-bold text-sm">{student.name}</p>
+                        <p className="text-[10px] text-white opacity-80 uppercase">{student.uni}</p>
+                      </div>
+                    </div>
+                  </>
+                );
+              } else {
+                // HIDDEN CARDS
+                wrapperClass += " z-0 opacity-0 scale-75 bg-[#8C3C0A]";
+                content = null;
+              }
+
+              return (
+                <div key={student.id} className={wrapperClass}>
+                  {content}
                 </div>
-              </div>
-            </div>
+              );
+            })}
+          </div>
+
+          {/* Nav Right */}
+          <button
+            onClick={handleNext}
+            className="hidden md:flex p-3 bg-white border border-slate-200 rounded-full shadow-sm hover:bg-slate-50 text-slate-600 absolute right-0 z-30 transition-colors"
+          >
+            <ChevronRightIcon size={20} />
+          </button>
+
+        </div>
+
+        {/* Dots Pagination */}
+        <div className="flex justify-center gap-2 mt-10">
+          {testimonials.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setActiveIndex(idx)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === activeIndex ? 'bg-[#002147] w-4' : 'bg-slate-300'
+                }`}
+            />
           ))}
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
-export default function UniversityFinder() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+// --- Support Section Component (UPDATED with 3 sections + ANIMATION + NEW COLORS) ---
+
+const SupportSection = () => {
+  const sectionRef = useRef(null);
+  const [lineHeight, setLineHeight] = useState(0);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    const handleScroll = () => {
+      if (!sectionRef.current) return;
+      const rect = sectionRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+
+      const startOffset = windowHeight / 2;
+      const val = startOffset - rect.top;
+      const maxHeight = rect.height;
+
+      setLineHeight(Math.max(0, Math.min(val, maxHeight)));
+    };
+
     window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial check
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-violet-50 to-slate-50 text-slate-900 font-sans selection:bg-violet-200 selection:text-violet-900">
-
-      {/* Navigation */}
-      <nav
-        className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isScrolled
-          ? 'bg-white/80 backdrop-blur-xl border-b border-slate-200/60 h-16'
-          : 'bg-transparent border-transparent h-24'
-          }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-gradient-to-br from-violet-600 to-purple-600 p-1.5 rounded-lg shadow-lg shadow-violet-500/20">
-              <GraduationCap className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-purple-600">UniFinder</span>
-          </div>
-
-          <div className="md:flex items-center space-x-8">
-            {['How it works', 'Features', 'Pricing'].map((item) => (
-              <button key={item} className="text-sm font-medium text-slate-600 hover:text-violet-600 transition-colors">
-                {item}
-              </button>
-            ))}
-            <div className="pl-4 flex items-center gap-4 border-l border-slate-200">
-              <Link href={ROUTES.LOGIN}>
-                <button className="text-sm font-medium text-slate-900 hover:text-violet-600">Log in</button>
-              </Link>
-              <Link href={ROUTES.SIGNUP}>
-                <button className="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-full text-sm font-medium hover:shadow-lg hover:shadow-violet-600/20 active:scale-95 transition-all duration-200">
-                  Get Started
-                </button>
-              </Link>
-            </div>
-          </div>
-
-          <button
-            className="md:hidden p-2 text-slate-600"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X /> : <Menu />}
-          </button>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="relative pt-40 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-violet-400/20 blur-[120px] rounded-full -z-10 opacity-50 mix-blend-multiply" />
-        <div className="absolute top-40 right-0 w-[600px] h-[600px] bg-purple-400/20 blur-[100px] rounded-full -z-10 opacity-50 mix-blend-multiply" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-full shadow-sm mb-8 animate-fade-in-up">
-            <Sparkles className="w-4 h-4 text-violet-500 fill-violet-500" />
-            <span className="text-sm font-semibold text-slate-700">New: AI Scholarship Matching</span>
-          </div>
-
-          <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 tracking-tight mb-8 max-w-4xl mx-auto leading-[1.1]">
-            Find your dream university. <br className="hidden md:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-purple-600">
-              Backed by Data.
-            </span>
-          </h1>
-
-          <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Stop guessing. Our algorithms analyze 5,000+ universities to calculate your exact acceptance probability and scholarship eligibility.
+    <div ref={sectionRef} className="bg-white py-20 overflow-hidden relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">How QS can support you</h2>
+          <p className="text-slate-600 max-w-3xl mx-auto text-lg">
+            We're here to support you through all stages of the university journey; whether its researching institutions, navigating admissions or submitting your application.
           </p>
+        </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-20">
-            <Link href={ROUTES.SIGNUP}>
-              <button className="h-14 px-8 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-full font-semibold text-lg hover:shadow-lg hover:shadow-violet-600/30 transition-all duration-300 hover:-translate-y-0.5 flex items-center gap-2 group">
-                Find My Match
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
-            </Link>
-            <button className="h-14 px-8 bg-white text-slate-700 border border-slate-200 rounded-full font-semibold text-lg hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm hover:shadow-md flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center">
-                <div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[8px] border-l-slate-900 border-b-[4px] border-b-transparent ml-1"></div>
-              </div>
-              Watch Demo
-            </button>
+        {/* Content Layout */}
+        <div className="relative">
+
+          {/* Timeline Center Line (Visible on Desktop) */}
+          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 -ml-[2px] w-1 bg-blue-700/20 rounded-full">
+            {/* Animated Fill Line */}
+            <div
+              className="w-full bg-[#1d4ed8] rounded-full transition-all duration-75 ease-linear"
+              style={{ height: `${lineHeight}px` }}
+            ></div>
           </div>
 
-          {/* Dashboard Preview (The "Testing Phase") */}
-          <div className="relative max-w-5xl mx-auto">
-            <div className="absolute inset-0 bg-gradient-to-t from-[#FAFAFA] via-transparent to-transparent z-10 h-full w-full"></div>
-            <div className="bg-white rounded-t-[2.5rem] p-2 border border-slate-200 shadow-2xl shadow-slate-200/50 mx-4 md:mx-0">
-              <div className="bg-slate-50 rounded-t-[2rem] border border-slate-100 aspect-[16/9] flex items-center justify-center overflow-hidden relative">
-
-                {/* Abstract App Interface */}
-                <div className="absolute top-8 left-8 right-8 bottom-0 bg-white rounded-t-xl shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] border border-slate-100 flex overflow-hidden">
-
-                  {/* Fake Sidebar */}
-                  <div className="w-56 bg-slate-50/50 border-r border-slate-100 p-6 hidden md:block">
-                    <div className="flex items-center gap-2 mb-8">
-                      <div className="w-3 h-3 rounded-full bg-slate-300"></div>
-                      <div className="w-3 h-3 rounded-full bg-slate-300"></div>
-                      <div className="w-3 h-3 rounded-full bg-slate-300"></div>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="h-8 w-full bg-violet-50 rounded-lg border border-violet-100 flex items-center px-3 gap-3">
-                        <PieChart className="w-4 h-4 text-violet-600" />
-                        <div className="h-2 w-16 bg-violet-200 rounded-full"></div>
-                      </div>
-                      <div className="h-8 w-full flex items-center px-3 gap-3 opacity-50">
-                        <FileText className="w-4 h-4 text-slate-400" />
-                        <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
-                      </div>
-                      <div className="h-8 w-full flex items-center px-3 gap-3 opacity-50">
-                        <AlertCircle className="w-4 h-4 text-slate-400" />
-                        <div className="h-2 w-14 bg-slate-200 rounded-full"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Main Analysis Content */}
-                  <div className="flex-1 p-8">
-                    <div className="flex items-center justify-between mb-8">
-                      <div>
-                        <h4 className="text-lg font-bold text-slate-900">Eligibility Assessment</h4>
-                        <p className="text-xs text-slate-500 mt-1">Simulating application against 2025 Criteria</p>
-                      </div>
-                      <div className="px-3 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-full border border-emerald-100 flex items-center gap-2 animate-pulse">
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                        LIVE SCAN
-                      </div>
-                    </div>
-
-                    <div className="space-y-6">
-                      {/* Progress Item 1: Complete */}
-                      <div>
-                        <div className="flex justify-between mb-2">
-                          <span className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                            Academic Score Normalization
-                          </span>
-                          <span className="text-xs font-bold text-emerald-600">COMPLETE</span>
-                        </div>
-                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-emerald-500 w-full rounded-full"></div>
-                        </div>
-                      </div>
-
-                      {/* Progress Item 2: Processing */}
-                      <div>
-                        <div className="flex justify-between mb-2">
-                          <span className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                            Scholarship & Grant Matching
-                          </span>
-                          <span className="text-xs font-bold text-blue-600">PROCESSING...</span>
-                        </div>
-                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-blue-600 w-3/4 rounded-full animate-[pulse_1.5s_ease-in-out_infinite]"></div>
-                        </div>
-                        <div className="mt-2 flex gap-2 overflow-hidden opacity-70">
-                          <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-500">Merit-based</span>
-                          <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-500">Need-based</span>
-                          <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-500">Sports</span>
-                        </div>
-                      </div>
-
-                      {/* Progress Item 3: Pending */}
-                      <div className="opacity-50">
-                        <div className="flex justify-between mb-2">
-                          <span className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-full border-2 border-slate-300"></div>
-                            Visa Probability Check
-                          </span>
-                          <span className="text-xs font-bold text-slate-400">PENDING</span>
-                        </div>
-                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-slate-300 w-0 rounded-full"></div>
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
-
-                </div>
+          {/* --- Section 1: Find the right course --- */}
+          <div className="flex flex-col md:flex-row items-center justify-center relative mb-20">
+            {/* Left: Illustration with uploaded image */}
+            <div className="w-full md:w-5/12 flex justify-end md:pr-12 mb-10 md:mb-0">
+              <div className="relative">
+                <img
+                  src="/Section/sec-1.png"
+                  alt="Find course illustration"
+                  className="max-w-full h-auto"
+                  style={{ maxHeight: '300px' }}
+                />
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Logo Marquee */}
-      <LogoMarquee />
+            {/* Center Dot */}
+            <div className={`hidden md:block absolute left-1/2 top-10 -ml-[6px] z-10 w-4 h-4 rounded-full border-4 border-white shadow-sm transition-colors duration-300 ${lineHeight > 100 ? 'bg-[#1d4ed8]' : 'bg-blue-700'}`}></div>
 
-      {/* Stats Section */}
-      <section className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 text-white py-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+            {/* Right: Card */}
+            <div className="w-full md:w-5/12 md:pl-12">
+              <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-sm relative">
+                {/* Mobile Timeline Connector */}
+                <div className="md:hidden w-1 h-10 bg-blue-700/20 absolute -top-10 left-1/2 -ml-0.5"></div>
+                <div className="md:hidden w-4 h-4 rounded-full bg-blue-700 border-4 border-white shadow-sm absolute -top-4 left-1/2 -ml-2"></div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-12 gap-x-8 text-center">
-            {[
-              { label: 'Universities', value: 5000, suffix: '+' },
-              { label: 'Countries', value: 150, suffix: '+' },
-              { label: 'Scholarships', value: 12000000, suffix: '$' },
-              { label: 'Success Rate', value: 98, suffix: '%' },
-            ].map((stat, idx) => (
-              <div key={idx} className="space-y-2">
-                <div className="text-4xl md:text-5xl font-bold tracking-tight text-white">
-                  <AnimatedCounter end={stat.value} suffix={stat.suffix} />
-                </div>
-                <div className="text-slate-400 font-medium">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Interactive Admission Predictor */}
-      <AdmissionPredictor />
-
-      {/* Features Grid */}
-      <section className="py-32 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-violet-600 font-semibold tracking-wide uppercase text-xs mb-4">Why Choose Us</h2>
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
-              Complete toolkit for admission success.
-            </h2>
-          </div>          <div className="grid md:grid-cols-3 gap-8">
-            {/* Large Card */}
-            <div className="md:col-span-2 bg-gradient-to-br from-violet-50 to-purple-50 rounded-[2.5rem] p-10 border border-violet-100 relative overflow-hidden group">
-              <div className="relative z-10 max-w-md">
-                <div className="w-12 h-12 bg-violet-600 rounded-2xl flex items-center justify-center mb-6 text-white">
-                  <Zap size={24} />
-                </div>
-                <h3 className="text-2xl font-bold mb-4">AI-Powered Matching Engine</h3>
-                <p className="text-slate-600 text-lg leading-relaxed">
-                  Our proprietary algorithm analyzes your grades, test scores, and extracurriculars against millions of data points to predict your admission chances with 94% accuracy.
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Find the right course for you</h3>
+                <p className="text-slate-600 mb-6 leading-relaxed">
+                  Our course matching tool features thousands of programmes and uses your personal study preferences to find the right course for you.
                 </p>
+                <Button className="bg-[#8C3C0A] text-white hover:bg-[#6b2d07] border-none font-bold w-full sm:w-auto flex justify-between sm:justify-center">
+                  Find Your Course <ArrowRightIcon size={18} className="ml-2" />
+                </Button>
               </div>
-              <div className="absolute top-1/2 -right-20 w-64 h-64 bg-gradient-to-br from-violet-400 to-purple-400 rounded-full blur-[80px] opacity-20 group-hover:opacity-30 transition-opacity duration-500"></div>
             </div>
+          </div>
 
-            {/* Tall Card */}
-            <div className="bg-gradient-to-br from-purple-900 to-slate-900 rounded-[2.5rem] p-10 text-white flex flex-col justify-between relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-violet-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div>
-                <Globe className="w-10 h-10 mb-6 text-violet-400" />
-                <h3 className="text-2xl font-bold mb-4">Global Reach</h3>
-                <p className="text-slate-400 leading-relaxed">
-                  Access database of universities across US, UK, Canada, Australia, and Europe.
+          {/* --- Section 2: Compare universities --- */}
+          <div className="flex flex-col md:flex-row items-center justify-center relative mb-20">
+            {/* Left: Card (Desktop Order: Card on Left) */}
+            <div className="w-full md:w-5/12 order-2 md:order-1 md:pr-12 md:text-right flex flex-col items-end">
+              <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-sm relative text-left w-full">
+                {/* Mobile Timeline Connector */}
+                <div className="md:hidden w-1 h-10 bg-blue-700/20 absolute -top-10 left-1/2 -ml-0.5"></div>
+                <div className="md:hidden w-4 h-4 rounded-full bg-blue-700 border-4 border-white shadow-sm absolute -top-4 left-1/2 -ml-2"></div>
+
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Easily compare universities with QS rankings</h3>
+                <p className="text-slate-600 mb-6 leading-relaxed">
+                  Filter our rankings by region or subject to compare university performance in factors that matter to you including reputation, employability and sustainability.
                 </p>
-              </div>
-              <div className="mt-8 flex -space-x-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="w-12 h-12 rounded-full bg-slate-800 border-2 border-purple-900 flex items-center justify-center text-xs font-bold">
-                    {['UK', 'US', 'CA', 'EU'][i - 1]}
-                  </div>
-                ))}
+                <Button className="bg-[#8C3C0A] text-white hover:bg-[#6b2d07] border-none font-bold w-full sm:w-auto flex justify-between sm:justify-center">
+                  Explore Rankings <ArrowRightIcon size={18} className="ml-2" />
+                </Button>
               </div>
             </div>
 
-            {/* 3 Smaller Cards */}
-            <FeatureCard
-              icon={Search}
-              title="Smart Filtering"
-              description="Filter by tuition budget, ranking, location, and course availability."
-              delay={0}
-            />
-            <FeatureCard
-              icon={ShieldCheck}
-              title="Visa Assistant"
-              description="Step-by-step guidance on documentation and interview prep."
-              delay={100}
-            />
-            <FeatureCard
-              icon={BarChart3}
-              title="Cost Calculator"
-              description="Estimate total cost of attendance including living expenses."
-              delay={200}
-            />
+            {/* Center Dot */}
+            <div className={`hidden md:block absolute left-1/2 top-10 -ml-[6px] z-10 w-4 h-4 rounded-full border-4 border-white shadow-sm transition-colors duration-300 ${lineHeight > 450 ? 'bg-[#1d4ed8]' : 'bg-blue-700'}`}></div>
+
+            {/* Right: Image (Desktop Order: Image on Right) */}
+            <div className="w-full md:w-5/12 order-1 md:order-2 flex justify-start md:pl-12 mb-10 md:mb-0">
+              <div className="relative">
+                <img
+                  src="/Section/sec-2.png"
+                  alt="Compare rankings illustration"
+                  className="max-w-full h-auto"
+                  style={{ maxHeight: '300px' }}
+                />
+              </div>
+            </div>
           </div>
+
+          {/* --- Section 3: Personalized Advice --- */}
+          <div className="flex flex-col md:flex-row items-center justify-center relative mb-20">
+            {/* Left: Illustration with uploaded image */}
+            <div className="w-full md:w-5/12 flex justify-end md:pr-12 mb-10 md:mb-0">
+              <div className="relative">
+                <img
+                  src="/Section/sec-3.png"
+                  alt="Personalized advice illustration"
+                  className="max-w-full h-auto"
+                  style={{ maxHeight: '300px' }}
+                />
+              </div>
+            </div>
+
+            {/* Center Dot */}
+            <div className={`hidden md:block absolute left-1/2 top-10 -ml-[6px] z-10 w-4 h-4 rounded-full border-4 border-white shadow-sm transition-colors duration-300 ${lineHeight > 800 ? 'bg-[#1d4ed8]' : 'bg-blue-700'}`}></div>
+
+            {/* Right: Card */}
+            <div className="w-full md:w-5/12 md:pl-12">
+              <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-sm relative">
+                {/* Mobile Timeline Connector */}
+                <div className="md:hidden w-1 h-10 bg-blue-700/20 absolute -top-10 left-1/2 -ml-0.5"></div>
+                <div className="md:hidden w-4 h-4 rounded-full bg-blue-700 border-4 border-white shadow-sm absolute -top-4 left-1/2 -ml-2"></div>
+
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Personalized advice and support with your university application</h3>
+                <p className="text-slate-600 mb-6 leading-relaxed">
+                  Our friendly QS counsellors have helped to submit over 13,000 applications and will personally guide you through to enrolment on your chosen course.
+                </p>
+                <Button className="bg-[#8C3C0A] text-white hover:bg-[#6b2d07] border-none font-bold w-full sm:w-auto flex justify-between sm:justify-center">
+                  Speak To A Counsellor <ArrowRightIcon size={18} className="ml-2" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* --- Section 4: Financial Support (NEW) --- */}
+          <div className="flex flex-col md:flex-row items-center justify-center relative mb-20">
+            {/* Left: Card (Desktop Order: Card on Left) */}
+            <div className="w-full md:w-5/12 order-2 md:order-1 md:pr-12 md:text-right flex flex-col items-end">
+              <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-sm relative text-left w-full">
+                {/* Mobile Timeline Connector */}
+                <div className="md:hidden w-1 h-10 bg-blue-700/20 absolute -top-10 left-1/2 -ml-0.5"></div>
+                <div className="md:hidden w-4 h-4 rounded-full bg-blue-700 border-4 border-white shadow-sm absolute -top-4 left-1/2 -ml-2"></div>
+
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Looking for financial support?</h3>
+                <p className="text-slate-600 mb-6 leading-relaxed">
+                  Find out more about the US$111m available through QS and partner scholarships.
+                </p>
+                <Button className="bg-[#8C3C0A] text-white hover:bg-[#6b2d07] border-none font-bold w-full sm:w-auto flex justify-between sm:justify-center">
+                  Explore Our Scholarships <ArrowRightIcon size={18} className="ml-2" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Center Dot */}
+            <div className={`hidden md:block absolute left-1/2 top-10 -ml-[6px] z-10 w-4 h-4 rounded-full border-4 border-white shadow-sm transition-colors duration-300 ${lineHeight > 1150 ? 'bg-[#1d4ed8]' : 'bg-blue-700'}`}></div>
+
+            {/* Right: Image (Desktop Order: Image on Right) */}
+            <div className="w-full md:w-5/12 order-1 md:order-2 flex justify-start md:pl-12 mb-10 md:mb-0">
+              <div className="relative">
+                <img
+                  src="/Section/sec-4.png"
+                  alt="Financial Support illustration"
+                  className="max-w-full h-auto"
+                  style={{ maxHeight: '300px' }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* --- Section 5: Advice on where to study (NEW) --- */}
+          <div className="flex flex-col md:flex-row items-center justify-center relative mb-20">
+            {/* Left: Illustration with uploaded image */}
+            <div className="w-full md:w-5/12 flex justify-end md:pr-12 mb-10 md:mb-0">
+              <div className="relative">
+                <img
+                  src="/Section/sec-5.png"
+                  alt="Advice illustration"
+                  className="max-w-full h-auto"
+                  style={{ maxHeight: '300px' }}
+                />
+              </div>
+            </div>
+
+            {/* Center Dot */}
+            <div className={`hidden md:block absolute left-1/2 top-10 -ml-[6px] z-10 w-4 h-4 rounded-full border-4 border-white shadow-sm transition-colors duration-300 ${lineHeight > 1500 ? 'bg-[#1d4ed8]' : 'bg-blue-700'}`}></div>
+
+            {/* Right: Card */}
+            <div className="w-full md:w-5/12 md:pl-12">
+              <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-sm relative">
+                {/* Mobile Timeline Connector */}
+                <div className="md:hidden w-1 h-10 bg-blue-700/20 absolute -top-10 left-1/2 -ml-0.5"></div>
+                <div className="md:hidden w-4 h-4 rounded-full bg-blue-700 border-4 border-white shadow-sm absolute -top-4 left-1/2 -ml-2"></div>
+
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Need more advice on where to study?</h3>
+                <p className="text-slate-600 mb-6 leading-relaxed">
+                  Learn more about student experiences at universities in the world's most incredible cities and get advice on visas, finding accommodation and fun things to do once you've arrived.
+                </p>
+                <Button className="bg-[#8C3C0A] text-white hover:bg-[#6b2d07] border-none font-bold w-full sm:w-auto flex justify-between sm:justify-center">
+                  Read More <ArrowRightIcon size={18} className="ml-2" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* --- Section 6: Meet representatives (NEW) --- */}
+          <div className="flex flex-col md:flex-row items-center justify-center relative">
+            {/* Left: Card (Desktop Order: Card on Left) */}
+            <div className="w-full md:w-5/12 order-2 md:order-1 md:pr-12 md:text-right flex flex-col items-end">
+              <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-sm relative text-left w-full">
+                {/* Mobile Timeline Connector */}
+                <div className="md:hidden w-1 h-10 bg-blue-700/20 absolute -top-10 left-1/2 -ml-0.5"></div>
+                <div className="md:hidden w-4 h-4 rounded-full bg-blue-700 border-4 border-white shadow-sm absolute -top-4 left-1/2 -ml-2"></div>
+
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Meet university representatives in person</h3>
+                <p className="text-slate-600 mb-6 leading-relaxed">
+                  Create connections and finalize your shortlist by speaking directly with staff at our global events.
+                </p>
+                <Button className="bg-[#8C3C0A] text-white hover:bg-[#6b2d07] border-none font-bold w-full sm:w-auto flex justify-between sm:justify-center">
+                  Find An Event Near You <ArrowRightIcon size={18} className="ml-2" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Center Dot */}
+            <div className={`hidden md:block absolute left-1/2 top-10 -ml-[6px] z-10 w-4 h-4 rounded-full border-4 border-white shadow-sm transition-colors duration-300 ${lineHeight > 1850 ? 'bg-[#1d4ed8]' : 'bg-blue-700'}`}></div>
+
+            {/* Right: Image (Desktop Order: Image on Right) */}
+            <div className="w-full md:w-5/12 order-1 md:order-2 flex justify-start md:pl-12 mb-10 md:mb-0">
+              <div className="relative">
+                <img
+                  src="/Section/sec-6.png"
+                  alt="Meet Reps illustration"
+                  className="max-w-full h-auto"
+                  style={{ maxHeight: '300px' }}
+                />
+              </div>
+            </div>
+          </div>
+
         </div>
-      </section>
-
-      {/* FAQ Section */}
-      <FAQSection />
-
-      {/* Call to Action */}
-      <section className="py-24 px-4">
-        <div className="max-w-5xl mx-auto bg-gradient-to-r from-violet-600 to-purple-600 rounded-[3rem] overflow-hidden relative shadow-2xl shadow-violet-900/20">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-black/10 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4"></div>
-
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between p-12 md:p-20 gap-12">
-            <div className="text-left md:max-w-lg">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Ready to start your journey?</h2>
-              <p className="text-blue-100 text-lg mb-8">
-                Join 50,000+ students who found their dream university with UniFinder.
-              </p>
-              <div className="flex gap-4">
-                <Link href={ROUTES.SIGNUP}>
-                  <button className="px-8 py-4 bg-white text-violet-600 rounded-full font-bold hover:bg-slate-50 transition-colors shadow-lg">
-                    Get Started Free
-                  </button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Trust Badge */}
-            <div className="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/20 text-white max-w-xs">
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
-                ))}
-              </div>
-              <p className="font-medium italic mb-6">&ldquo;I got into my top choice university with a 50% scholarship using this tool.&rdquo;</p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-violet-500 flex items-center justify-center font-bold">S</div>
-                <div>
-                  <p className="text-sm font-bold">Sarah Jenkins</p>
-                  <p className="text-xs text-violet-200">Stanford &apos;25</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-100 pt-20 pb-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-5 gap-12 mb-16">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="bg-gradient-to-br from-violet-600 to-purple-600 p-1.5 rounded-lg shadow-lg shadow-violet-500/20">
-                  <GraduationCap className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-purple-600">UniFinder</span>
-              </div>
-              <p className="text-slate-500 mb-6 max-w-sm">
-                Making higher education accessible to everyone through transparent data and AI technology.
-              </p>
-              <div className="flex gap-4">
-                <button className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors text-slate-600"><Twitter size={18} /></button>
-                <button className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors text-slate-600"><Linkedin size={18} /></button>
-                <button className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors text-slate-600"><Facebook size={18} /></button>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-slate-900 mb-6">Product</h4>
-              <ul className="space-y-4 text-sm text-slate-500">
-                <li><a href="#" className="hover:text-violet-600 transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-violet-600 transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-violet-600 transition-colors">Enterprise</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-900 mb-6">Resources</h4>
-              <ul className="space-y-4 text-sm text-slate-500">
-                <li><a href="#" className="hover:text-violet-600 transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-violet-600 transition-colors">Scholarship Guide</a></li>
-                <li><a href="#" className="hover:text-violet-600 transition-colors">Visa Help</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-900 mb-6">Legal</h4>
-              <ul className="space-y-4 text-sm text-slate-500">
-                <li><a href="#" className="hover:text-violet-600 transition-colors">Privacy</a></li>
-                <li><a href="#" className="hover:text-violet-600 transition-colors">Terms</a></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-slate-400">© 2025 UniFinder Inc. All rights reserved.</p>
-            <div className="flex gap-6 items-center">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span className="text-xs text-slate-500 font-medium">All Systems Operational</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+      </div>
     </div>
   );
-}
+};
+
+// --- Footer Component ---
+
+const Footer = () => {
+  return (
+    <footer className="bg-white border-t border-gray-100 pt-16 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 mb-16">
+
+          {/* Brand Column */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="bg-[#D26E1E] text-white font-bold p-1 rounded text-lg">QS</div>
+              <span className="font-bold text-xl text-slate-800">TopUniversities</span>
+            </div>
+            <p className="text-slate-500 mb-8 max-w-sm leading-relaxed text-sm">
+              Making higher education accessible to everyone through transparent data, trusted rankings, and AI-powered guidance technology.
+            </p>
+            <div className="flex gap-4">
+              <a href="#" className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-[#D26E1E] hover:bg-orange-50 transition-colors">
+                <TwitterIcon size={18} />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-[#D26E1E] hover:bg-orange-50 transition-colors">
+                <LinkedinIcon size={18} />
+              </a>
+              <a href="#" className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-[#D26E1E] hover:bg-orange-50 transition-colors">
+                <FacebookIcon size={18} />
+              </a>
+            </div>
+          </div>
+
+          {/* Links Columns */}
+          <div className="lg:col-span-1">
+            <h4 className="font-bold text-slate-900 mb-6">Product</h4>
+            <ul className="space-y-4 text-sm text-slate-500">
+              <li><a href="#" className="hover:text-[#D26E1E] transition-colors">Rankings</a></li>
+              <li><a href="#" className="hover:text-[#D26E1E] transition-colors">Course Finder</a></li>
+              <li><a href="#" className="hover:text-[#D26E1E] transition-colors">University Profiles</a></li>
+              <li><a href="#" className="hover:text-[#D26E1E] transition-colors">QS Events</a></li>
+            </ul>
+          </div>
+
+          <div className="lg:col-span-1">
+            <h4 className="font-bold text-slate-900 mb-6">Resources</h4>
+            <ul className="space-y-4 text-sm text-slate-500">
+              <li><a href="#" className="hover:text-[#D26E1E] transition-colors">Student Blog</a></li>
+              <li><a href="#" className="hover:text-[#D26E1E] transition-colors">Scholarship Guide</a></li>
+              <li><a href="#" className="hover:text-[#D26E1E] transition-colors">Visa Help</a></li>
+              <li><a href="#" className="hover:text-[#D26E1E] transition-colors">Study Destinations</a></li>
+            </ul>
+          </div>
+
+          <div className="lg:col-span-2">
+            <h4 className="font-bold text-slate-900 mb-6">Stay Updated</h4>
+            <p className="text-sm text-slate-500 mb-4">Subscribe to our newsletter for the latest study abroad news and scholarship alerts.</p>
+            <div className="flex gap-2">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="flex-1 bg-slate-50 border border-slate-200 rounded px-4 py-2 text-sm focus:outline-none focus:border-[#D26E1E]"
+              />
+              <Button className="px-4 py-2 text-sm font-bold bg-[#8C3C0A] hover:bg-[#6b2d07]">
+                Subscribe
+              </Button>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="text-slate-400 text-sm">
+            © 2026 QS Quacquarelli Symonds Limited. All rights reserved.
+          </div>
+
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+              <span className="text-xs font-medium text-slate-500">All Systems Operational</span>
+            </div>
+            <div className="flex gap-6 text-sm text-slate-500">
+              <a href="#" className="hover:text-[#D26E1E]">Privacy</a>
+              <a href="#" className="hover:text-[#D26E1E]">Terms</a>
+              <a href="#" className="hover:text-[#D26E1E]">Sitemap</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+// --- Auth Modal Component ---
+
+const AuthModal = ({ isOpen, initialMode = 'login', onClose }) => {
+  const [mode, setMode] = useState(initialMode); // 'login' or 'signup'
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode, isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-[#8C3C0A]/60 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+      />
+
+      {/* Modal Content */}
+      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col lg:flex-row h-[90vh] lg:h-auto animate-in fade-in zoom-in duration-300">
+
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-20 p-2 bg-gray-50 hover:bg-gray-100 rounded-full text-gray-500 transition"
+        >
+          <XIcon size={20} />
+        </button>
+
+        {/* LEFT SIDE: Info Panel */}
+        <div className="hidden lg:flex w-5/12 bg-orange-50 p-10 flex-col justify-between relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-orange-100 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+
+          <div className="relative z-10">
+            <h2 className="text-3xl font-bold text-[#8C3C0A] mb-8 leading-tight">
+              Discover top ranked universities!
+            </h2>
+
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-[#D26E1E]">
+                  <GlobeIcon size={20} />
+                </div>
+                <div>
+                  <div className="font-bold text-[#8C3C0A] text-lg">9000+</div>
+                  <div className="text-[#8C3C0A]/70 text-sm">Universities</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-[#D26E1E]">
+                  <BookOpenIcon size={20} />
+                </div>
+                <div>
+                  <div className="font-bold text-[#8C3C0A] text-lg">144567</div>
+                  <div className="text-[#8C3C0A]/70 text-sm">Programmes</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-[#D26E1E]">
+                  <CalendarIcon size={20} />
+                </div>
+                <div>
+                  <div className="font-bold text-[#8C3C0A] text-lg">150+</div>
+                  <div className="text-[#8C3C0A]/70 text-sm">Events every year</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-[#D26E1E]">
+                  <MapPinIcon size={20} />
+                </div>
+                <div>
+                  <div className="font-bold text-[#8C3C0A] text-lg">25</div>
+                  <div className="text-[#8C3C0A]/70 text-sm">Countries</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative z-10 mt-8 flex justify-center">
+            <div className="relative">
+              <div className="flex -space-x-4 justify-center">
+                <div className="w-12 h-12 rounded-full bg-[#FA9628] border-2 border-white"></div>
+                <div className="w-16 h-16 rounded-full bg-[#8C3C0A] border-2 border-white -mt-4 relative z-10"></div>
+                <div className="w-12 h-12 rounded-full bg-[#D26E1E] border-2 border-white"></div>
+              </div>
+              <div className="w-32 h-32 bg-[#8C3C0A] rounded-full mx-auto -mt-6 flex items-center justify-center border-4 border-white relative z-20">
+                <GlobeIcon size={64} className="text-white opacity-20" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT SIDE: Form Panel */}
+        <div className="w-full lg:w-7/12 p-8 lg:p-10 overflow-y-auto">
+          <div className="max-w-md mx-auto">
+
+            <div className="space-y-3 mb-8">
+              <Button variant="social" className="gap-3 py-3 font-medium border-gray-300">
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                </svg>
+                Sign {mode === 'login' ? 'in' : 'up'} with Google
+              </Button>
+              <Button variant="social" className="gap-3 py-3 font-medium text-blue-800 border-blue-200 bg-blue-50/50 hover:bg-blue-100">
+                <div className="bg-blue-800 rounded-full p-0.5 text-white">
+                  <svg fill="currentColor" viewBox="0 0 24 24" className="w-3 h-3"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" /></svg>
+                </div>
+                Sign {mode === 'login' ? 'in' : 'up'} with Facebook
+              </Button>
+            </div>
+
+            <div className="relative my-8">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-gray-400">OR</span>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-2xl font-bold text-[#8C3C0A] mb-2">
+                {mode === 'login' ? 'Sign in' : 'Sign up'}
+              </h3>
+              <p className="text-[#8C3C0A]/70">
+                {mode === 'login'
+                  ? 'Enter your registered email id to sign in'
+                  : "What's your name?"
+                }
+              </p>
+            </div>
+
+            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+              {mode === 'signup' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <input
+                      type="text"
+                      placeholder="First name*"
+                      className="w-full px-4 py-3 rounded border border-gray-300 focus:border-[#8C3C0A] focus:ring-1 focus:ring-[#8C3C0A] outline-none transition"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <input
+                      type="text"
+                      placeholder="Last name*"
+                      className="w-full px-4 py-3 rounded border border-gray-300 focus:border-[#8C3C0A] focus:ring-1 focus:ring-[#8C3C0A] outline-none transition"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="relative">
+                <input
+                  type="email"
+                  id="email"
+                  className="peer w-full px-4 pt-5 pb-2 rounded border border-gray-300 focus:border-[#8C3C0A] focus:ring-1 focus:ring-[#8C3C0A] outline-none transition placeholder-transparent"
+                  placeholder="Email"
+                />
+                <label htmlFor="email" className="absolute left-4 top-1 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-gray-400 peer-focus:top-1 peer-focus:text-xs peer-focus:text-[#8C3C0A]">
+                  Email*
+                </label>
+              </div>
+
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  className="peer w-full px-4 pt-5 pb-2 rounded border border-gray-300 focus:border-[#8C3C0A] focus:ring-1 focus:ring-[#8C3C0A] outline-none transition placeholder-transparent pr-10"
+                  placeholder="Password"
+                />
+                <label htmlFor="password" className="absolute left-4 top-1 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-gray-400 peer-focus:top-1 peer-focus:text-xs peer-focus:text-[#8C3C0A]">
+                  {mode === 'login' ? 'Password*' : 'Choose a password*'}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
+                </button>
+              </div>
+
+              {mode === 'login' && (
+                <div className="flex justify-end">
+                  <a href="#" className="text-sm text-[#D26E1E] hover:text-[#8C3C0A] hover:underline font-semibold">Forgot password?</a>
+                </div>
+              )}
+
+              {mode === 'signup' && (
+                <div className="space-y-4 pt-2">
+                  <div>
+                    <p className="text-sm text-[#8C3C0A]/80 mb-2">Is your age below 16?</p>
+                    <div className="flex gap-4">
+                      <button className="flex-1 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm font-medium text-[#8C3C0A]">Yes</button>
+                      <button className="flex-1 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm font-medium text-[#8C3C0A]">No</button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <input type="checkbox" className="mt-1 rounded border-gray-300 text-[#D26E1E] focus:ring-[#D26E1E]" />
+                      <span className="text-xs text-gray-500 group-hover:text-gray-700">I am happy to receive communication and useful resources from QS that are related to my study preferences.</span>
+                    </label>
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <input type="checkbox" className="mt-1 rounded border-gray-300 text-[#D26E1E] focus:ring-[#D26E1E]" />
+                      <span className="text-xs text-gray-500 group-hover:text-gray-700">I am happy to receive messages from third parties including institutions relevant to my study preferences.</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              <Button className="w-full py-3.5 text-lg font-bold mt-4">
+                {mode === 'login' ? 'Sign In' : 'Continue to Sign Up'}
+              </Button>
+
+            </form>
+
+            <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+              <span className="text-gray-500 text-sm">
+                {mode === 'login' ? "Don't have an account?" : "Already have an account?"}
+              </span>
+              <button
+                onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+                className="ml-2 text-[#D26E1E] hover:text-[#8C3C0A] hover:underline font-bold text-sm transition-colors"
+              >
+                {mode === 'login' ? 'Sign up' : 'Sign in'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Dashboard Component ---
+
+const Dashboard = ({ onLoginClick, onSignUpClick }) => {
+  return (
+    <div className="min-h-screen bg-white font-sans text-slate-800">
+      {/* Navbar */}
+      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo & Links */}
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-2 cursor-pointer">
+                {/* Updated Logo Color to match Amber theme */}
+                <div className="bg-[#D26E1E] text-white font-bold p-1 rounded text-lg">QS</div>
+                <span className="font-bold text-xl text-slate-800">TopUniversities</span>
+              </div>
+              <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+                <a href="#" className="hover:text-[#D26E1E] transition-colors">Rankings</a>
+                <a href="#" className="hover:text-[#D26E1E] transition-colors">Discover</a>
+                <a href="#" className="hover:text-[#D26E1E] transition-colors">Events</a>
+                <a href="#" className="hover:text-[#D26E1E] transition-colors">Prepare</a>
+              </div>
+            </div>
+
+            {/* Right Actions */}
+            <div className="flex items-center gap-4">
+              <Button variant="outline" className="hidden lg:flex rounded-full px-4 py-1.5 text-sm border-gray-200 text-slate-600 hover:text-[#D26E1E] hover:border-[#D26E1E]">
+                Free Counselling
+              </Button>
+              <button className="p-2 text-slate-600 hover:bg-orange-50 rounded-full">
+                <SearchIcon size={20} />
+              </button>
+              <button
+                onClick={onLoginClick}
+                className="hidden sm:block text-slate-700 font-bold hover:text-[#D26E1E] transition-colors"
+              >
+                Login
+              </button>
+              <Button onClick={onSignUpClick} className="hidden sm:flex font-bold">
+                Sign Up
+              </Button>
+              <button className="md:hidden p-2 text-slate-600">
+                <MenuIcon size={24} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+      {/* Hero Section Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12">
+        {/* Responsive Gradient Card 
+        - Mobile: Vertical Gradient (to-b) + Less Padding (p-6)
+        - Desktop: Horizontal Gradient (to-r) + More Padding (p-16)
+    */}
+        <div className="relative w-full rounded-3xl overflow-hidden shadow-xl shadow-orange-900/20 
+        bg-gradient-to-b lg:bg-gradient-to-r 
+        from-[rgba(250,150,40,0.6)] via-[rgba(210,110,30,0.8)] to-[rgba(140,60,10,0.95)]
+        p-6 sm:p-10 lg:p-16">
+
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-8 h-full">
+
+            {/* Left Content */}
+            <div className="w-full lg:w-1/2 z-10 space-y-6 text-center lg:text-left">
+              <div className="inline-flex items-center justify-center lg:justify-start bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/30 shadow-sm">
+                <span className="text-xs font-bold uppercase tracking-wider text-white">
+                  Course Recommendation
+                </span>
+              </div>
+
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight drop-shadow-sm">
+                Connect with your dream university today
+              </h1>
+
+              <div className="space-y-3 text-orange-50 font-medium text-sm sm:text-base max-w-xl mx-auto lg:mx-0">
+                <div className="flex items-start lg:items-center gap-3 justify-center lg:justify-start">
+                  <CheckCircleIcon size={20} className="text-white shrink-0 mt-0.5 lg:mt-0" />
+                  <span>Get personalised admission support for top universities</span>
+                </div>
+                <div className="flex items-start lg:items-center gap-3 justify-center lg:justify-start">
+                  <CheckCircleIcon size={20} className="text-white shrink-0 mt-0.5 lg:mt-0" />
+                  <span>Get academic details from universities in just a few clicks.</span>
+                </div>
+              </div>
+
+              {/* Widget Container */}
+              <div className="relative mt-8 max-w-md mx-auto lg:mx-0 bg-white/10 backdrop-blur-sm rounded-2xl p-2 border border-white/20">
+                <CourseRecommendationWidget onComplete={onSignUpClick} />
+              </div>
+            </div>
+
+            {/* Right Hero Illustration 
+                - Mobile: Visible, Centered, Smaller (max-w-xs)
+                - Desktop: Full size (lg:max-w-lg)
+            */}
+            <div className="w-full lg:w-1/2 flex justify-center items-center relative mt-4 lg:mt-0">
+              <div className="relative w-full max-w-xs sm:max-w-sm lg:max-w-lg transition-transform duration-500 hover:scale-105">
+                {/* Optional: Glow effect behind the rocket */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-white/20 blur-[50px] rounded-full -z-10"></div>
+
+                <img
+                  src="/Section/female_rocket_new.svg"
+                  alt="Student launching career"
+                  className="w-full h-auto drop-shadow-2xl"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* Cards Section - Enhanced & Real Data */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <h2 className="text-2xl font-bold text-slate-900 mb-8">Latest Rankings & Reports</h2>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+          {/* Card 1: World Rankings */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group relative overflow-hidden">
+            {/* Badge */}
+            <div className="absolute top-6 right-6 bg-orange-100 text-[#D26E1E] text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wide z-10">
+              Flagship
+            </div>
+
+            {/* Visual */}
+            <div className="h-40 w-full rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 mb-6 flex items-center justify-center relative overflow-hidden">
+              <GlobeIcon size={96} className="text-[#D26E1E] opacity-10 absolute -bottom-6 -right-6" />
+              <div className="bg-white p-4 rounded-full shadow-sm z-10 text-[#D26E1E]">
+                <GlobeIcon size={32} />
+              </div>
+            </div>
+
+            <h3 className="font-bold text-xl mb-3 text-slate-900 group-hover:text-[#D26E1E] transition-colors">
+              QS World University Rankings 2026
+            </h3>
+            <p className="text-slate-600 mb-6 flex-grow text-sm leading-relaxed">
+              The world's most trusted university ranking. Compare the top 1,500 institutions based on academic reputation, employer reputation, and research impact.
+            </p>
+
+            <Button variant="primary" className="self-start rounded-full px-6 font-bold w-full flex justify-between items-center group-hover:bg-[#8C3C0A]">
+              Explore Rankings <ArrowRightIcon size={16} />
+            </Button>
+          </div>
+
+          {/* Card 2: Subject Rankings */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group relative overflow-hidden">
+
+            {/* Visual */}
+            <div className="h-40 w-full rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 mb-6 flex items-center justify-center relative overflow-hidden">
+              <BookOpenIcon size={96} className="text-[#D26E1E] opacity-10 absolute -bottom-6 -right-6" />
+              <div className="bg-white p-4 rounded-full shadow-sm z-10 text-[#D26E1E]">
+                <BookOpenIcon size={32} />
+              </div>
+            </div>
+
+            <h3 className="font-bold text-xl mb-3 text-slate-900 group-hover:text-[#D26E1E] transition-colors">
+              QS World University Rankings by Subject 2025
+            </h3>
+            <p className="text-slate-600 mb-6 flex-grow text-sm leading-relaxed">
+              Find the top universities for your field. Covering 55 subjects across 5 broad faculty areas including Engineering, Medicine, and Law.
+            </p>
+
+            <Button variant="primary" className="self-start rounded-full px-6 font-bold w-full flex justify-between items-center group-hover:bg-[#8C3C0A]">
+              View Subjects <ArrowRightIcon size={16} />
+            </Button>
+          </div>
+
+          {/* Card 3: Sustainability */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full group relative overflow-hidden">
+
+            {/* Visual */}
+            <div className="h-40 w-full rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 mb-6 flex items-center justify-center relative overflow-hidden">
+              <MapPinIcon size={96} className="text-[#D26E1E] opacity-10 absolute -bottom-6 -right-6" />
+              <div className="bg-white p-4 rounded-full shadow-sm z-10 text-[#D26E1E]">
+                <MapPinIcon size={32} />
+              </div>
+            </div>
+
+            <h3 className="font-bold text-xl mb-3 text-slate-900 group-hover:text-[#D26E1E] transition-colors">
+              QS Sustainability Rankings 2026
+            </h3>
+            <p className="text-slate-600 mb-6 flex-grow text-sm leading-relaxed">
+              Discover universities leading the way in social and environmental impact. See who is committed to a more sustainable future.
+            </p>
+
+            <Button variant="primary" className="self-start rounded-full px-6 font-bold w-full flex justify-between items-center group-hover:bg-[#8C3C0A]">
+              See Impact <ArrowRightIcon size={16} />
+            </Button>
+          </div>
+
+        </div>
+      </div>
+
+      {/* NEW SECTION: Testimonials */}
+      <TestimonialsSection />
+
+      {/* NEW SECTION: Support Section */}
+      <SupportSection />
+
+      {/* NEW SECTION: Footer */}
+      <Footer />
+
+    </div>
+  );
+};
+
+const App = () => {
+  const [modalState, setModalState] = useState('closed'); // 'closed', 'login', 'signup'
+
+  return (
+    <div className="relative">
+      <CustomStyles />
+      <Dashboard
+        onLoginClick={() => setModalState('login')}
+        onSignUpClick={() => setModalState('signup')}
+      />
+
+      <AuthModal
+        isOpen={modalState !== 'closed'}
+        initialMode={modalState === 'closed' ? 'login' : modalState}
+        onClose={() => setModalState('closed')}
+      />
+    </div>
+  );
+};
+
+export default App;
